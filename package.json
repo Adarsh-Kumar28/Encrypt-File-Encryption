@@ -1,0 +1,19 @@
+{
+  "name": "test_node",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "node index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@lit-protocol/encryption": "^2.1.43",
+    "@lit-protocol/uint8arrays": "^2.1.43",
+    "ethers": "^6.0.8",
+    "siwe": "^1.1.6",
+    "uint8arrays": "^4.0.3"
+  }
+}
