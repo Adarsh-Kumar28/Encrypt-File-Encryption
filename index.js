@@ -3,9 +3,8 @@ import siwe from "siwe";
 import fs from "fs";
 import LitJsSdk from "@lit-protocol/encryption";
 import { uint8arrayToString } from "@lit-protocol/uint8arrays";
-// import LitJsSdk from "@lit-protocol/lit-node-client";
 
-const privKey = "1abd8d123a31e65a34e9567cc941db8de97e0f9385c50c0191695258f6651a1a";
+const privKey = "<PRIVATE-KEY>";
 const wallet = new ethers.Wallet(privKey);
 
 const domain = "localhost";
