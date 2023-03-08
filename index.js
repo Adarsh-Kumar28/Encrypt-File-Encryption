@@ -1,10 +1,11 @@
 import { ethers } from "ethers";
 import siwe from "siwe";
 import fs from "fs";
-import LitJsSdk from "@lit-protocol/encryption";
+import { encryptFile, decryptFile } from "@lit-protocol/encryption";
 import { uint8arrayToString } from "@lit-protocol/uint8arrays";
+import LitJsSdk from "@lit-protocol/lit-node-client";
 
-const privKey = "<PRIVATE-KEY>";
+const privKey = "1abd8d123a31e65a34e9567cc941db8de97e0f9385c50c0191695258f6651a1a";
 const wallet = new ethers.Wallet(privKey);
 
 const domain = "localhost";
@@ -40,6 +41,10 @@ const authSig = {
 
 console.log("authSig", authSig);
 
+// const { encryptString, symmetricKey } = await LitJsSdk.encryptString("Adarsh");
+// console.log(encryptString);
+// console.log(symmetricKey);
+
 let file = fs.readFileSync("./package.json");
 // const fileString = LitJsSdk.uint8arrayToString(file, "base16");
 const fileString = uint8arrayToString(file, "base16");
@@ -49,11 +54,13 @@ console.log(file);
 const fileBlob = new Blob(file);
 console.log("here-");
 
-const { encryptedFile, symmetricKey } = await LitJsSdk.encryptFile({file:fileBlob});
+// const { encryptedFile, symmetricKey } = await LitJsSdk.encryptFile({file:fileBlob});
+const { encryptedFile, symmetricKey } = await encryptFile({file:fileBlob});
 console.log("encryptedFile- ", await encryptedFile.text());
 console.log("symmetricKey- ", symmetricKey);
 
 const client = new LitJsSdk.LitNodeClient();
+// const client = new LitNodeClient();
 const chain = "ethereum";
 await client.connect();
 
@@ -91,7 +98,8 @@ const newSymmetricKey = await client.getEncryptionKey({
 
 console.log("newSymmetricKey- ", newSymmetricKey);
 
-const decryptedFile = await LitJsSdk.decryptFile({
+// const decryptedFile = await LitJsSdk.decryptFile({
+const decryptedFile = await decryptFile({
   file: encryptedFile,
   symmetricKey: newSymmetricKey
 });

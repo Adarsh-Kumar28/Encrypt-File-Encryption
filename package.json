@@ -10,8 +10,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@lit-protocol/encryption": "^2.1.43",
-    "@lit-protocol/uint8arrays": "^2.1.43",
+    "@lit-protocol/encryption": "^2.1.49",
+    "@lit-protocol/lit-node-client": "^2.1.49",
+    "@lit-protocol/uint8arrays": "^2.1.49",
     "ethers": "^6.0.8",
     "siwe": "^1.1.6",
     "uint8arrays": "^4.0.3"
