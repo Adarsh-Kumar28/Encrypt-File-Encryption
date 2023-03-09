@@ -1,69 +1,16 @@
+import pinataSDK from '@pinata/sdk';
+import LitJsSdk from "@lit-protocol/lit-node-client";
 import { ethers } from "ethers";
 import siwe from "siwe";
-import fs from "fs";
-import { encryptFile, decryptFile } from "@lit-protocol/encryption";
-import { uint8arrayToString } from "@lit-protocol/uint8arrays";
-import LitJsSdk from "@lit-protocol/lit-node-client";
 
-const privKey = "1abd8d123a31e65a34e9567cc941db8de97e0f9385c50c0191695258f6651a1a";
+const pinata = new pinataSDK('..', '..');
+const privKey = "PRIVATE-KEY";
 const wallet = new ethers.Wallet(privKey);
 
-const domain = "localhost";
-const origin = "https://localhost/login";
-const statement =
-  "This is a test statement.  You can put anything you want here.";
-
-const siweMessage = new siwe.SiweMessage({
-  domain,
-  address: wallet.address,
-  statement,
-  uri: origin,
-  version: "1",
-  chainId: "1",
-});
-
-const messageToSign = siweMessage.prepareMessage();
-
-const signature = await wallet.signMessage(messageToSign);
-
-console.log("signature- ", signature);
-
-const recoveredAddress = ethers.verifyMessage(messageToSign, signature);
-console.log("recoveredAddress- ", recoveredAddress)
-console.log("address- ", wallet.address);
-
-const authSig = {
-  sig: signature,
-  derivedVia: "web3.eth.personal.sign",
-  signedMessage: messageToSign,
-  address: recoveredAddress,
-};
-
-console.log("authSig", authSig);
-
-// const { encryptString, symmetricKey } = await LitJsSdk.encryptString("Adarsh");
-// console.log(encryptString);
-// console.log(symmetricKey);
-
-let file = fs.readFileSync("./package.json");
-// const fileString = LitJsSdk.uint8arrayToString(file, "base16");
-const fileString = uint8arrayToString(file, "base16");
-console.log(typeof(fileString));
-console.log(fileString);
-console.log(file);
-const fileBlob = new Blob(file);
-console.log("here-");
-
-// const { encryptedFile, symmetricKey } = await LitJsSdk.encryptFile({file:fileBlob});
-const { encryptedFile, symmetricKey } = await encryptFile({file:fileBlob});
-console.log("encryptedFile- ", await encryptedFile.text());
-console.log("symmetricKey- ", symmetricKey);
-
 const client = new LitJsSdk.LitNodeClient();
-// const client = new LitNodeClient();
-const chain = "ethereum";
 await client.connect();
 
+const chain = "ethereum";
 const accessControlConditions = [
   {
     contractAddress: "",
@@ -78,33 +25,92 @@ const accessControlConditions = [
   },
 ];
 
-const encryptedSymmetricKey = await client.saveEncryptionKey({
-  accessControlConditions,
-  symmetricKey,
-  authSig,
-  chain,
-});
+const getSiweAuthsig = async () => {
+    const domain = "localhost";
+    const origin = "https://localhost/login";
+    const statement =
+    "DAshy- This is a test statement.  You can put anything you want here.";
 
-// const encryptedSymmetricKeyString = LitJsSdk.uint8arrayToString(encryptedSymmetricKey, "base16");
-const encryptedSymmetricKeyString = uint8arrayToString(encryptedSymmetricKey, "base16");
-console.log(encryptedSymmetricKeyString);
+    const siweMessage = new siwe.SiweMessage({
+        domain,
+        address: wallet.address,
+        statement,
+        uri: origin,
+        version: "1",
+        chainId: "1",
+    });
+    const messageToSign = siweMessage.prepareMessage();
+    const signature = await wallet.signMessage(messageToSign);
+    const recoveredAddress = ethers.verifyMessage(messageToSign, signature);
+    const authSig = {
+        sig: signature,
+        derivedVia: "web3.eth.personal.sign",
+        signedMessage: messageToSign,
+        address: recoveredAddress,
+    };
+    return authSig;
+}
 
-const newSymmetricKey = await client.getEncryptionKey({
-  accessControlConditions,
-  toDecrypt: encryptedSymmetricKeyString,
-  chain,
-  authSig,
-});
+const litEncryptString = async () => {
+    const { encryptedString, symmetricKey } = await LitJsSdk.encryptString("DAshy");
+    const encryptedSymmetricKey = await client.saveEncryptionKey({
+        accessControlConditions,
+        symmetricKey,
+        authSig: await getSiweAuthsig(),
+        chain,
+    });
 
-console.log("newSymmetricKey- ", newSymmetricKey);
+    return {
+        encryptedString,
+        encryptedSymmetricKey: LitJsSdk.uint8arrayToString(encryptedSymmetricKey, "base16")
+    };
+}
 
-// const decryptedFile = await LitJsSdk.decryptFile({
-const decryptedFile = await decryptFile({
-  file: encryptedFile,
-  symmetricKey: newSymmetricKey
-});
+const litDecryptString = async (encryptedString, encryptedSymmetricKey) => {
+    const symmetricKey = await client.getEncryptionKey({
+        accessControlConditions,
+        toDecrypt: encryptedSymmetricKey,
+        chain,
+        authSig: await getSiweAuthsig()
+    });
+    const decryptedString = await LitJsSdk.decryptString(
+        encryptedString,
+        symmetricKey
+    );
+    console.log(decryptedString);
+}
 
-console.log("decryptedFile");
-console.log(decryptedFile);
-const enc = new TextDecoder("utf-8");
-console.log(enc.decode(decryptedFile));
+const uploadToIpfs = async (body) => {
+    const res = await pinata.pinJSONToIPFS({...body, encryptedString: await body.encryptedString.text() });
+    return res;
+}
+
+const fetchFromIpfs = async (cid) => {
+    const res = await fetch(`https://gateway.pinata.cloud/ipfs/${cid}`);
+    const val = await res.json();
+    console.log(val);
+    const encryptedString = val.encryptedString;
+    const encryptedSymmetricKey = val.encryptedSymmetricKey;
+    console.log(encryptedString);
+    console.log(encryptedSymmetricKey);
+
+    // const encryptedStringBlob = new Blob([encryptedString], { type: 'application/octet-stream' });
+    const encryptedStringBlob = new Blob([encryptedString]);
+    console.log(encryptedStringBlob);
+    console.log(await encryptedStringBlob.text() === encryptedString);
+    
+    return {
+        encryptedStringBlob,
+        encryptedSymmetricKey,
+    };
+}
+
+const body = await litEncryptString();
+console.log(body.encryptedString);
+const res = await uploadToIpfs(body);
+console.log(res);
+const { encryptedStringBlob, encryptedSymmetricKey } = await fetchFromIpfs(res.IpfsHash);
+console.log(await body.encryptedString.text() === await encryptedStringBlob.text());
+console.log(typeof(encryptedStringBlob));
+await litDecryptString(encryptedStringBlob, encryptedSymmetricKey);
+// await litDecryptString(body.encryptedString, body.encryptedSymmetricKey);
