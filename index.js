@@ -53,7 +53,7 @@ const getSiweAuthsig = async () => {
 }
 
 const litEncryptString = async () => {
-    const { encryptedString, symmetricKey } = await LitJsSdk.encryptString("BAshy");
+    const { encryptedString, symmetricKey } = await LitJsSdk.encryptString("Ashu Helloe");
     const encryptedSymmetricKey = await client.saveEncryptionKey({
         accessControlConditions,
         symmetricKey,
@@ -97,40 +97,45 @@ const fetchFromIpfs = async (cid) => {
     console.log("val");
     console.log(val);
     const encryptedString = val.encryptedString;
-    // const encryptedSymmetricKey = val.encryptedSymmetricKey;
+    const encryptedSymmetricKey = val.encryptedSymmetricKey;
     console.log(encryptedString);
-    // console.log(encryptedSymmetricKey);
+    console.log(encryptedSymmetricKey);
 
-    // const encryptedStringBlob = new Blob([encryptedString], { type: 'application/octet-stream' });
-    // console.log("encryptedStringBlob");
-    // console.log(encryptedStringBlob);
-    // console.log(await encryptedStringBlob.text() === encryptedString);
+    const encryptedStringBlob = new Blob([Buffer.from(encryptedString)], { type: 'application/octet-stream' });
+    console.log("encryptedStringBlob");
+    console.log(encryptedStringBlob);
+    console.log(await encryptedStringBlob.text() === encryptedString);
     
     return {
-        encryptedString,
-        // encryptedStringBlob,
-        // encryptedSymmetricKey,
+        // encryptedString,
+        encryptedStringBlob,
+        encryptedSymmetricKey,
     };
 }
 
-// const body = await litEncryptString();
-// console.log(body.encryptedString);
-// console.log(await body.encryptedString.text());
-// const res = await uploadToIpfs(body);
-// console.log(res);
-
-const res = await fetch(`https://gateway.pinata.cloud/ipfs/QmZW73X2pWbx3oA3a5imk3iyiwhu2xcKjyas7hvnS6Qrrm`);
-console.log("res");
+const body = await litEncryptString();
+console.log(body.encryptedString);
+console.log(await body.encryptedString.text());
+const res = await uploadToIpfs(body);
 console.log(res);
-const val = await res.json();
-console.log("val");
-console.log(val);
-const encryptedString = val.encryptedString;
-console.log(encryptedString);
-console.log(typeof(encryptedString));
-const blob = new Blob([Buffer.from(encryptedString)], { type: 'application/octet-stream' });
-console.log(blob);
-await litDecryptString(blob, val.encryptedSymmetricKey);
+const { encryptedStringBlob, encryptedSymmetricKey } = await fetchFromIpfs(res.IpfsHash);
+console.log(await body.encryptedString.text() === await encryptedStringBlob.text());
+console.log(typeof(encryptedStringBlob));
+await litDecryptString(encryptedStringBlob, encryptedSymmetricKey);
+
+// const res = await fetch(`https://gateway.pinata.cloud/ipfs/QmeJCjqB6D7qBXpziCDiSmxkkZmE7mUWRfLgY4kg3qb3Fc`);
+// console.log("res");
+// console.log(res);
+// console.log("json");
+// const val = await res.json();
+// console.log("val");
+// console.log(val);
+// const encryptedString = val.encryptedString;
+// console.log(encryptedString);
+// console.log(typeof(encryptedString));
+// const blob = new Blob([Buffer.from(encryptedString)], { type: 'application/octet-stream' });
+// console.log(blob);
+// await litDecryptString(blob, val.encryptedSymmetricKey);
 // console.log(JSON.parse(encryptedString));
 
 // const res = readFile(body.encryptedString);
