@@ -2,9 +2,10 @@ import pinataSDK from '@pinata/sdk';
 import LitJsSdk from "@lit-protocol/lit-node-client";
 import { ethers } from "ethers";
 import siwe from "siwe";
+import { readFile } from "fs";
 
-const pinata = new pinataSDK('..', '..');
-const privKey = "PRIVATE-KEY";
+const pinata = new pinataSDK('d74988b6b586aafca17b', 'ca736a005f5cf0cbdfc02e99c56906799bdebdd512a2e0931d46a7c9fa837b17');
+const privKey = "1abd8d123a31e65a34e9567cc941db8de97e0f9385c50c0191695258f6651a1a";
 const wallet = new ethers.Wallet(privKey);
 
 const client = new LitJsSdk.LitNodeClient();
@@ -52,7 +53,7 @@ const getSiweAuthsig = async () => {
 }
 
 const litEncryptString = async () => {
-    const { encryptedString, symmetricKey } = await LitJsSdk.encryptString("DAshy");
+    const { encryptedString, symmetricKey } = await LitJsSdk.encryptString("BAshy");
     const encryptedSymmetricKey = await client.saveEncryptionKey({
         accessControlConditions,
         symmetricKey,
@@ -81,21 +82,27 @@ const litDecryptString = async (encryptedString, encryptedSymmetricKey) => {
 }
 
 const uploadToIpfs = async (body) => {
-    const res = await pinata.pinJSONToIPFS({...body, encryptedString: await body.encryptedString.text() });
+	const encryptedString = Buffer.from(await body.encryptedString.text(), 'binary').toString('base64');
+	// const encryptedString = Buffer.from(await body.encryptedString.text()).toString('base64');
+	// const encryptedString = Buffer.from(await body.encryptedString.text()).toString();
+    const res = await pinata.pinJSONToIPFS({...body, encryptedString});
+    // const res = await pinata.pinJSONToIPFS({...body, encryptedString: await body.encryptedString.text() });
+    // const res = await pinata.pinFileToIPFS(body.encryptedString);
     return res;
 }
 
 const fetchFromIpfs = async (cid) => {
     const res = await fetch(`https://gateway.pinata.cloud/ipfs/${cid}`);
     const val = await res.json();
+    console.log("val");
     console.log(val);
     const encryptedString = val.encryptedString;
     const encryptedSymmetricKey = val.encryptedSymmetricKey;
     console.log(encryptedString);
     console.log(encryptedSymmetricKey);
 
-    // const encryptedStringBlob = new Blob([encryptedString], { type: 'application/octet-stream' });
-    const encryptedStringBlob = new Blob([encryptedString]);
+    const encryptedStringBlob = new Blob([encryptedString], { type: 'application/octet-stream' });
+    console.log("encryptedStringBlob");
     console.log(encryptedStringBlob);
     console.log(await encryptedStringBlob.text() === encryptedString);
     
@@ -107,10 +114,22 @@ const fetchFromIpfs = async (cid) => {
 
 const body = await litEncryptString();
 console.log(body.encryptedString);
-const res = await uploadToIpfs(body);
+console.log(await body.encryptedString.text());
+// const res = readFile(body.encryptedString);
+const buffer = Buffer.from(await body.encryptedString.text(), 'binary');
+// const buffer = Buffer.from(await body.encryptedString.text());
+console.log(buffer);
+const res = buffer.toString('base64');
 console.log(res);
-const { encryptedStringBlob, encryptedSymmetricKey } = await fetchFromIpfs(res.IpfsHash);
-console.log(await body.encryptedString.text() === await encryptedStringBlob.text());
-console.log(typeof(encryptedStringBlob));
-await litDecryptString(encryptedStringBlob, encryptedSymmetricKey);
+const blob = new Blob([Buffer.from(res, 'base64')],  { type: 'application/octet-stream' });
+console.log(blob);
+console.log(await blob.text());
 // await litDecryptString(body.encryptedString, body.encryptedSymmetricKey);
+await litDecryptString(blob, body.encryptedSymmetricKey);
+
+// const res = await uploadToIpfs(body);
+// console.log(res);
+// const { encryptedStringBlob, encryptedSymmetricKey } = await fetchFromIpfs(res.IpfsHash);
+// console.log(await body.encryptedString.text() === await encryptedStringBlob.text());
+// console.log(typeof(encryptedStringBlob));
+// await litDecryptString(encryptedStringBlob, encryptedSymmetricKey);
