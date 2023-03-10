@@ -82,12 +82,10 @@ const litDecryptString = async (encryptedString, encryptedSymmetricKey) => {
 }
 
 const uploadToIpfs = async (body) => {
-	const encryptedString = Buffer.from(await body.encryptedString.text(), 'binary').toString('base64');
-	// const encryptedString = Buffer.from(await body.encryptedString.text()).toString('base64');
-	// const encryptedString = Buffer.from(await body.encryptedString.text()).toString();
-    const res = await pinata.pinJSONToIPFS({...body, encryptedString});
+	// const encryptedString = Buffer.from(await body.encryptedString.text(), 'binary').toString('base64');
+    // const res = await pinata.pinJSONToIPFS({...body, encryptedString});
     // const res = await pinata.pinJSONToIPFS({...body, encryptedString: await body.encryptedString.text() });
-    // const res = await pinata.pinFileToIPFS(body.encryptedString);
+    const res = await pinata.pinFileToIPFS(body.encryptedString, { pinataMetadata: { name: 'encryptedString' } });
     return res;
 }
 
@@ -97,39 +95,46 @@ const fetchFromIpfs = async (cid) => {
     console.log("val");
     console.log(val);
     const encryptedString = val.encryptedString;
-    const encryptedSymmetricKey = val.encryptedSymmetricKey;
+    // const encryptedSymmetricKey = val.encryptedSymmetricKey;
     console.log(encryptedString);
-    console.log(encryptedSymmetricKey);
+    // console.log(encryptedSymmetricKey);
 
-    const encryptedStringBlob = new Blob([encryptedString], { type: 'application/octet-stream' });
-    console.log("encryptedStringBlob");
-    console.log(encryptedStringBlob);
-    console.log(await encryptedStringBlob.text() === encryptedString);
+    // const encryptedStringBlob = new Blob([encryptedString], { type: 'application/octet-stream' });
+    // console.log("encryptedStringBlob");
+    // console.log(encryptedStringBlob);
+    // console.log(await encryptedStringBlob.text() === encryptedString);
     
     return {
-        encryptedStringBlob,
-        encryptedSymmetricKey,
+        encryptedString,
+        // encryptedStringBlob,
+        // encryptedSymmetricKey,
     };
 }
 
 const body = await litEncryptString();
 console.log(body.encryptedString);
 console.log(await body.encryptedString.text());
-// const res = readFile(body.encryptedString);
-const buffer = Buffer.from(await body.encryptedString.text(), 'binary');
-// const buffer = Buffer.from(await body.encryptedString.text());
-console.log(buffer);
-const res = buffer.toString('base64');
+// const file = new File([body.encryptedString], "encryptedString");
+// console.log(file);
+const res = await uploadToIpfs(body);
 console.log(res);
-const blob = new Blob([Buffer.from(res, 'base64')],  { type: 'application/octet-stream' });
-console.log(blob);
-console.log(await blob.text());
-// await litDecryptString(body.encryptedString, body.encryptedSymmetricKey);
-await litDecryptString(blob, body.encryptedSymmetricKey);
-
-// const res = await uploadToIpfs(body);
-// console.log(res);
 // const { encryptedStringBlob, encryptedSymmetricKey } = await fetchFromIpfs(res.IpfsHash);
+const { encryptedString } = await fetchFromIpfs(res.IpfsHash);
 // console.log(await body.encryptedString.text() === await encryptedStringBlob.text());
+console.log(await body.encryptedString.text() === await encryptedString.text());
 // console.log(typeof(encryptedStringBlob));
-// await litDecryptString(encryptedStringBlob, encryptedSymmetricKey);
+console.log(typeof(encryptedString));
+// await litDecryptString(encryptedStringBlob, body.encryptedSymmetricKey);
+await litDecryptString(encryptedString, body.encryptedSymmetricKey);
+
+// const res = readFile(body.encryptedString);
+// const buffer = Buffer.from(await body.encryptedString.text(), 'binary');
+// const buffer = Buffer.from(await body.encryptedString.text());
+// console.log(buffer);
+// const res = buffer.toString('base64');
+// console.log(res);
+// const blob = new Blob([Buffer.from(res, 'base64')],  { type: 'application/octet-stream' });
+// console.log(blob);
+// console.log(await blob.text());
+// await litDecryptString(body.encryptedString, body.encryptedSymmetricKey);
+// await litDecryptString(blob, body.encryptedSymmetricKey);
