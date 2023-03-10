@@ -82,10 +82,12 @@ const litDecryptString = async (encryptedString, encryptedSymmetricKey) => {
 }
 
 const uploadToIpfs = async (body) => {
+	const temp = await body.encryptedString.arrayBuffer();
+	const encryptedString = Buffer.from(temp).toJSON();
 	// const encryptedString = Buffer.from(await body.encryptedString.text(), 'binary').toString('base64');
-    // const res = await pinata.pinJSONToIPFS({...body, encryptedString});
+    const res = await pinata.pinJSONToIPFS({...body, encryptedString});
     // const res = await pinata.pinJSONToIPFS({...body, encryptedString: await body.encryptedString.text() });
-    const res = await pinata.pinFileToIPFS(body.encryptedString, { pinataMetadata: { name: 'encryptedString' } });
+    // const res = await pinata.pinFileToIPFS(body.encryptedString, { pinataMetadata: { name: 'encryptedString' } });
     return res;
 }
 
@@ -111,30 +113,52 @@ const fetchFromIpfs = async (cid) => {
     };
 }
 
-const body = await litEncryptString();
-console.log(body.encryptedString);
-console.log(await body.encryptedString.text());
-// const file = new File([body.encryptedString], "encryptedString");
-// console.log(file);
-const res = await uploadToIpfs(body);
+// const body = await litEncryptString();
+// console.log(body.encryptedString);
+// console.log(await body.encryptedString.text());
+// const res = await uploadToIpfs(body);
+// console.log(res);
+
+const res = await fetch(`https://gateway.pinata.cloud/ipfs/QmZW73X2pWbx3oA3a5imk3iyiwhu2xcKjyas7hvnS6Qrrm`);
+console.log("res");
 console.log(res);
-// const { encryptedStringBlob, encryptedSymmetricKey } = await fetchFromIpfs(res.IpfsHash);
-const { encryptedString } = await fetchFromIpfs(res.IpfsHash);
-// console.log(await body.encryptedString.text() === await encryptedStringBlob.text());
-console.log(await body.encryptedString.text() === await encryptedString.text());
-// console.log(typeof(encryptedStringBlob));
+const val = await res.json();
+console.log("val");
+console.log(val);
+const encryptedString = val.encryptedString;
+console.log(encryptedString);
 console.log(typeof(encryptedString));
-// await litDecryptString(encryptedStringBlob, body.encryptedSymmetricKey);
-await litDecryptString(encryptedString, body.encryptedSymmetricKey);
+const blob = new Blob([Buffer.from(encryptedString)], { type: 'application/octet-stream' });
+console.log(blob);
+await litDecryptString(blob, val.encryptedSymmetricKey);
+// console.log(JSON.parse(encryptedString));
 
 // const res = readFile(body.encryptedString);
 // const buffer = Buffer.from(await body.encryptedString.text(), 'binary');
 // const buffer = Buffer.from(await body.encryptedString.text());
 // console.log(buffer);
 // const res = buffer.toString('base64');
+
+// const res = await body.encryptedString.arrayBuffer();
 // console.log(res);
-// const blob = new Blob([Buffer.from(res, 'base64')],  { type: 'application/octet-stream' });
+// const base64 = Buffer.from(res).toJSON();
+// console.log(base64)
+// // const blob = new Blob([Buffer.from(res, 'base64')],  { type: 'application/octet-stream' });
+// const blob = new Blob([res], { type: 'application/octet-stream' });
 // console.log(blob);
 // console.log(await blob.text());
-// await litDecryptString(body.encryptedString, body.encryptedSymmetricKey);
+// // await litDecryptString(body.encryptedString, body.encryptedSymmetricKey);
 // await litDecryptString(blob, body.encryptedSymmetricKey);
+
+// // const file = new File([body.encryptedString], "encryptedString");
+// // console.log(file);
+// const res = await uploadToIpfs(body);
+// console.log(res);
+// // const { encryptedStringBlob, encryptedSymmetricKey } = await fetchFromIpfs(res.IpfsHash);
+// const { encryptedString } = await fetchFromIpfs(res.IpfsHash);
+// // console.log(await body.encryptedString.text() === await encryptedStringBlob.text());
+// console.log(await body.encryptedString.text() === await encryptedString.text());
+// // console.log(typeof(encryptedStringBlob));
+// console.log(typeof(encryptedString));
+// // await litDecryptString(encryptedStringBlob, body.encryptedSymmetricKey);
+// await litDecryptString(encryptedString, body.encryptedSymmetricKey);
